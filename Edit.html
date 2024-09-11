@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Drug</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="body">
+    <section id="top">
+      <h2>Edit Your Drug</h2>
+      <form id="add-drug-form" class="drug-form">
+        <div class="form-group">
+          <label for="drugName">Drug Name</label>
+          <input
+            type="text"
+            name="drugName"
+            id="drugName"
+            placeholder="Enter Drug Name"
+            required
+          />
+          <small class="error" id="drugNameError"></small>
+        </div>
+
+        <div class="form-group">
+          <label for="quantity">Quantity</label>
+          <div class="quantity-control">
+            <input
+              type="number"
+              name="quantity"
+              id="quantity"
+              placeholder="Enter Quantity"
+              required
+              min="1"
+            />
+          </div>
+          <small class="error" id="quantityError"></small>
+        </div>
+
+        <div class="form-group">
+          <label for="category">Category</label>
+          <input
+            type="text"
+            name="category"
+            id="category"
+            list="categories"
+            placeholder="Enter or Select Category"
+            required
+          />
+          <datalist id="categories">
+            <option value="Antibiotic"></option>
+            <option value="Analgesic"></option>
+            <option value="Antiseptic"></option>
+            <option value="Antiviral"></option>
+            <option value="Antihistamine"></option>
+            <option value="Antifungal"></option>
+            <option value="Immunosuppressant"></option>
+            <option value="Corticosteroid"></option>
+            <option value="Antidepressant"></option>
+            <option value="Antidiabetic"></option>
+            <option value="Antipsychotic"></option>
+            <option value="Antihypertensive"></option>
+            <option value="Diuretic"></option>
+            <option value="Sedative"></option>
+            <option value="Opioid"></option>
+            <option value="Antiepileptic"></option>
+            <option value="Beta-blocker"></option>
+            <option value="Anticoagulant"></option>
+            <option value="Statin"></option>
+            <option value="Proton Pump Inhibitor (PPI)"></option>
+          </datalist>
+        </div>
+
+        <div class="form-group">
+          <label for="expiry">Expiry Date</label>
+          <input type="date" name="expiry" id="expiry" required />
+          <small class="error" id="expiryError"></small>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea
+            name="description"
+            id="description"
+            rows="4"
+            placeholder="Add a brief description..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="drugImage">Upload Image</label>
+          <input type="file" name="drugImage" id="drugImage" accept="image/*" />
+        </div>
+        <div class="break">
+          <input
+            type="submit"
+            class="submit-btn"
+            id="updateDrug"
+            value="Update"
+          />
+          <input
+            type="button"
+            class="submit-btn"
+            id="deleteDrug"
+            value="Delete"
+          />
+        </div>
+      </form>
+    </section>
+    <script src="swal.js"></script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+      import {
+        createUserWithEmailAndPassword,
+        getAuth,
+        onAuthStateChanged,
+        signInWithEmailAndPassword,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+      import {
+        getFirestore,
+        collection,
+        addDoc,
+        where,
+        query,
+        getDoc,
+        doc,
+        deleteDoc,
+        updateDoc,
+      } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+      import {
+        getStorage,
+        ref,
+        uploadBytes,
+        getDownloadURL,
+      } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
+
+      // Initialize Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyC-JsdJ-zYCjpjbY6G9dGdjBsPcnZBqHUI",
+        authDomain: "inventory-management-4d9dd.firebaseapp.com",
+        projectId: "inventory-management-4d9dd",
+        storageBucket: "inventory-management-4d9dd.appspot.com",
+        messagingSenderId: "549803702445",
+        appId: "1:549803702445:web:eed76cff51b8b650d9ae24",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      const storage = getStorage(app);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const drugId = urlParams.get("id");
+      const colRef = doc(db, "usersDrugs", drugId);
+
+      async function getblog() {
+        try {
+          console.log("Getting drug data...");
+          const data = await getDoc(colRef);
+
+          if (!data.exists()) {
+            return Swal.fire({
+              icon: "error",
+              title: "Oops...",
+              text: "Drug not found!",
+            });
+          }
+
+          const drugData = data.data();
+          const form = document.getElementById("add-drug-form");
+          form["drugName"].value = drugData.name || "";
+          form["quantity"].value = drugData.quantity || "";
+          form["category"].value = drugData.category || "";
+          form["expiry"].value = drugData.expiryDate || "";
+          form["description"].value = drugData.description || "";
+        } catch (error) {
+          Swal.fire({
+            position: "top-end",
+            icon: "error",
+            title: error.message,
+            showConfirmButton: false,
+            timer: 2500,
+          });
+        }
+      }
+
+      getblog();
+
+      const deleteDrug = document.getElementById("deleteDrug");
+      deleteDrug.addEventListener("click", async (e) => {
+        deleteDrug.value = "Deleting...";
+        e.preventDefault();
+        try {
+          await deleteDoc(colRef);
+          Swal.fire({
+            position: "top-end",
+            icon: "success",
+            title: "Drug deleted successfully! Redirecting...",
+            showConfirmButton: false,
+            timer: 2500,
+          }).then(() => {
+            window.location.href = "dashboard.html";
+          });
+        } catch (error) {
+          Swal.fire({
+            position: "top-end",
+            icon: "error",
+            title: error.message,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        } finally {
+          deleteDrug.value = "Delete";
+        }
+      });
+
+      const form = document.getElementById("add-drug-form");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const target = e.target;
+        const name = target.drugName.value;
+        const quantity = target.quantity.value;
+        const category = target.category.value;
+        const expiryDate = target.expiry.value;
+        const description = target.description.value;
+        const image = target.drugImage.files[0];
+        const updateDrug = target.updateDrug;
+        let date = new Date();
+
+        if (!drugName || !quantity || !category || !expiry || !description) {
+          const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+              toast.onmouseenter = Swal.stopTimer;
+              toast.onmouseleave = Swal.resumeTimer;
+            },
+          });
+          Toast.fire({
+            icon: "error",
+            title: "Please fill in all the required fields.",
+          });
+          return;
+        }
+
+        const fileImage = image;
+        const random = Math.floor(Math.random() * 5000);
+        const storageRef = ref(storage, "images/" + fileImage.name + random);
+        updateDrug.value = "Updating...";
+
+        try {
+          const res = await uploadBytes(storageRef, fileImage);
+          const imageUrl = await getDownloadURL(storageRef);
+
+          const dataToUpdate = {
+            name,
+            quantity,
+            category,
+            expiryDate,
+            description,
+            image: imageUrl,
+            addedOn: date,
+          };
+          const save = await updateDoc(colRef, dataToUpdate);
+          Swal.fire({
+            position: "top-end",
+            icon: "success",
+            title: "Drug updated successfully! Redirecting...",
+            showConfirmButton: false,
+            timer: 1500,
+          }).then(() => {
+            window.location.href = "dashboard.html";
+          });
+        } catch (error) {
+          Swal.fire({
+            position: "top-end",
+            icon: "error",
+            title: error.message,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        } finally {
+          updateDrug.value = "Update";
+        }
+      });
+    </script>
+  </body>
+</html>

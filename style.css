@@ -553,3 +553,14 @@ section {
     grid-template-columns: 1fr;
   }
 }
+
+#top{
+  margin-top: 20px;
+}
+
+.break{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}

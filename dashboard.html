@@ -228,14 +228,23 @@
         const description = target.description.value;
         const drugImage = target.drugImage.files[0];
         const submitDrug = target.submitDrug;
+        let date = new Date();
 
         if (!name || !quantity || !category || !expiryDate || !drugImage) {
-          Swal.fire({
+          const Toast = Swal.mixin({
+            toast: true,
             position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+              toast.onmouseenter = Swal.stopTimer;
+              toast.onmouseleave = Swal.resumeTimer;
+            },
+          });
+          Toast.fire({
             icon: "error",
             title: "All fields are required",
-            showConfirmButton: false,
-            timer: 2500,
           });
           return;
         }
@@ -258,6 +267,7 @@
             description,
             image: imageUrl,
             userId,
+            addedOn: date,
           };
 
           const save = await addDoc(colRef, datatoAdd);
@@ -301,11 +311,12 @@
                 <img src="${data.image}" alt="${data.name}" />
               </div>
               <div class="drug-details">
-                <h3>${data.name}</h3>
+                <h3><a href="Edit.html?id=${doc.id}">${data.name}</a></h3>
                 <p>Category: ${data.category}</p>
                 <p>Quantity: ${data.quantity}</p>
                 <p>Expiry Date: ${data.expiryDate}</p>
                 <p>Description: ${data.description}</p>
+                <p>Added on: ${data.addedOn.toDate().toDateString()}</p>
               </div>
                 </div>
             `;
